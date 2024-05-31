@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>세련된 지렁이 게임</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        #game-container {
+            text-align: center;
+        }
+        canvas {
+            border: 2px solid #61dafb;
+            background-color: #ffffff;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        #score {
+            margin-top: 20px;
+            font-size: 24px;
+            color: #333333;
+        }
+        #playAgainBtn {
+            display: none;
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #61dafb;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+        <div id="score">Score: 0</div>
+        <button id="playAgainBtn">Play Again</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const context = canvas.getContext("2d");
+
+        // 각종 설정값
+        const boxSize = 20;
+        const gridSize = canvas.width / boxSize;
+        let snake = [];
+        let apple = {};
+        let direction = "right";
+        let score = 0;
+        let gameOver = false;
+
+        // 지렁이 초기 위치 및 사과 생성
+        function initialize() {
+            snake = [{ x: gridSize / 2, y: gridSize / 2 }];
+            createApple();
+            gameOver = false;
+            document.getElementById("playAgainBtn").style.display = "none";
+            score = 0;
+        }
+
+        // 사과 생성
+        function createApple() {
+            apple = {
+                x: Math.floor(Math.random() * gridSize),
+                y: Math.floor(Math.random() * gridSize)
+            };
+        }
+
+        // 게임 실행
+        function gameLoop() {
+            if (!gameOver) {
+                moveSnake();
+                if (checkCollision()) {
+                    endGame();
+                    return;
+                }
+            }
+
+            clearCanvas();
+            drawApple();
+            drawSnake();
+            drawScore();
+
+            if (!gameOver) {
+                setTimeout(gameLoop, 100);
+            }
+        }
+
+        // 지렁이 이동
+        function moveSnake() {
+            let newHead = { x: snake[0].x, y: snake[0].y };
+
+            if (direction === "up") newHead.y--;
+            else if (direction === "down") newHead.y++;
+            else if (direction === "left") newHead.x--;
+            else if (direction === "right") newHead.x++;
+
+            // 사과를 먹었을 때
+            if (newHead.x === apple.x && newHead.y === apple.y) {
+                score++;
+                createApple();
+            } else {
+                snake.pop();
+            }
+
+            snake.unshift(newHead);
+        }
+
+        // 충돌 체크
+        function checkCollision() {
+            const head = snake[0];
+            return (
+                head.x < 0 ||
+                head.x >= gridSize ||
+                head.y < 0 ||
+                head.y >= gridSize ||
+                snake.slice(1).some(seg => seg.x === head.x && seg.y === head.y)
+            );
+        }
+
+        // 게임 종료
+        function endGame() {
+            gameOver = true;
+            document.getElementById("playAgainBtn").style.display = "block";
+        }
+
+        // 캔버스 지우기
+        function clearCanvas() {
+            context.fillStyle = "#ffffff";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // 사과 그리기
+        function drawApple() {
+            context.fillStyle = "red";
+            context.fillRect(apple.x * boxSize, apple.y * boxSize, boxSize, boxSize);
+        }
+
+        // 지렁이 그리기
+        function drawSnake() {
+            snake.forEach((seg, index) => {
+                if (index === 0) {
+                    context.fillStyle = "green";
+                } else {
+                    context.fillStyle = "#2ecc71"; // 머리가 아닌 몸통은 다른 색상
+                }
+                context.fillRect(seg.x * boxSize, seg.y * boxSize, boxSize, boxSize);
+            });
+        }
+
+        // 점수 표시
+        function drawScore() {
+            context.fillStyle = "#333333";
+            context.font = "20px Arial";
+            context.fillText("Score: " + score, 10, 30);
+        }
+
+        // 키보드 입력 처리
+        document.addEventListener("keydown", function (event) {
+            if (!gameOver) {
+                const key = event.key;
+                if (key === "ArrowUp" && direction !== "down") direction = "up";
+                else if (key === "ArrowDown" && direction !== "up") direction = "down";
+                else if (key === "ArrowLeft" && direction !== "right") direction = "left";
+                else if (key === "ArrowRight" && direction !== "left") direction = "right";
+            } else if (gameOver && event.key === " ") {
+                initialize();
+                gameLoop();
+            }
+        });
+
+        // 플레이 다시하기 버튼 클릭 이벤트
+        document.getElementById("playAgainBtn").addEventListener("click", function () {
+            initialize();
+            gameLoop();
+        });
+
+        initialize();
+        gameLoop();
+    </script>
+</body>
+</html>
+
+
+
+
